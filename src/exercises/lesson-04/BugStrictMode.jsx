@@ -7,9 +7,11 @@ export default function BugStrictMode() {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    setInterval(() => {
+    const interval = setInterval(() => {
       setCount((c) => c + 1);
     }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -21,3 +23,6 @@ export default function BugStrictMode() {
 }
 
 // Write your explanation of how StrictMode helps us catch this bug
+// StrictMode helped show that the timer was not being cleaned up.
+// This caused more than one timer to run at the same time.
+// Using clearInterval fixes the problem and keeps the counter working correctly.
