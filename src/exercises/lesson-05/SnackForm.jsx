@@ -31,17 +31,51 @@ export default function SnackForm({
     });
   }, [editingSnack]);
 
+  function validateName() {
+    return name.trim() !== '';
+  }
+
+  function validateRating() {
+    return rating !== '';
+  }
+
+  function getNameError() {
+    if (touched.name && !validateName()) {
+      return 'Snack name is required';
+    }
+    return '';
+  }
+
+  function getRatingError() {
+    if (touched.rating && !validateRating()) {
+      return 'Please select a rating';
+    }
+    return '';
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const name = formData.get('name');
-    const rating = formData.get('rating');
+
+    setTouched({
+      name: true,
+      rating: true,
+    });
+
+    if (!validateName() || !validateRating()) {
+      return;
+    }
 
     if (isEditing) {
       updateSnack(editingSnack.id, name, rating);
     } else {
       addSnack(name, rating);
-      e.target.reset();
+
+      setName('');
+      setRating('');
+      setTouched({
+        name: false,
+        rating: false,
+      });
     }
   }
 
@@ -67,10 +101,11 @@ export default function SnackForm({
               name: true,
             }))
           }
-          required
           className={styles['field-input']}
           placeholder="Enter snack name"
         />
+
+        {getNameError() && <div className={styles.error}>{getNameError()}</div>}
       </div>
 
       <div className={styles['field-container']}>
@@ -86,12 +121,14 @@ export default function SnackForm({
               rating: true,
             }))
           }
-          required
           min="1"
           max="5"
           className={styles['field-input']}
           placeholder="Rate 1-5"
         />
+        {getRatingError() && (
+          <div className={styles.error}>{getRatingError()}</div>
+        )}
       </div>
 
       <div className={styles['button-container']}>
