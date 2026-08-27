@@ -7,6 +7,7 @@ import styles from '../StudentWork.module.css';
 export function QuestionItem({ question }) {
   // HINT: use these with controlled form
   const [workingText, setWorkingText] = useState(question.question);
+  const [workingOptions, setWorkingOptions] = useState(question.options);
   const { state, dispatch } = useContext(SurveyContext);
   const isEditing = state.ui.editingQuestionId === question.id;
 
@@ -26,6 +27,7 @@ export function QuestionItem({ question }) {
       });
     } else {
       setWorkingText(question.question);
+      setWorkingOptions(question.options);
       dispatch({
         type: 'SET_EDITING_QUESTION',
         payload: { questionId: question.id },
@@ -50,10 +52,64 @@ export function QuestionItem({ question }) {
     }
   };
 
-  // TODO: Students will add delete functionality here
+  const handleOptionChange = (index, value) => {
+    const updatedOptions = [...workingOptions];
+    updatedOptions[index] = value;
+    setWorkingOptions(updatedOptions);
+  };
+
+  const handleOptionSave = (index) => {
+    if (workingOptions[index].trim()) {
+      dispatch({
+        type: 'UPDATE_OPTION_TEXT',
+        payload: {
+          questionId: question.id,
+          optionIndex: index,
+          newText: workingOptions[index].trim(),
+        },
+      });
+    }
+  };
+
+  const handleOptionDelete = (index) => {
+    dispatch({
+      type: 'DELETE_OPTION_FROM_QUESTION',
+      payload: {
+        questionId: question.id,
+        optionIndex: index,
+      },
+    });
+
+    setWorkingOptions((options) => options.filter((_, i) => i !== index));
+  };
+
+  const handleAddOption = () => {
+    const optionText = window.prompt('Enter new option:');
+
+    if (optionText?.trim()) {
+      dispatch({
+        type: 'ADD_OPTION_TO_QUESTION',
+        payload: {
+          questionId: question.id,
+          optionText: optionText.trim(),
+        },
+      });
+
+      setWorkingOptions((options) => [...options, optionText.trim()]);
+    }
+  };
+
   const handleDelete = () => {
-    console.log('TODO: Implement delete functionality');
-    // Hint: Show confirmation dialog, then use DELETE_QUESTION action
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this question?'
+    );
+
+    if (confirmed) {
+      dispatch({
+        type: 'DELETE_QUESTION',
+        payload: { id: question.id },
+      });
+    }
   };
 
   return (
@@ -69,7 +125,7 @@ export function QuestionItem({ question }) {
           </button>
 
           <button className={styles['delete-btn']} onClick={handleDelete}>
-            Delete (TODO)
+            Delete
           </button>
         </div>
       </div>
@@ -98,13 +154,45 @@ export function QuestionItem({ question }) {
         <div className={styles['options-section']}>
           <h4>Answer Options:</h4>
 
-          <ul>
-            {question.options.map((option, index) => (
-              <li key={index} className={styles['option-item']}>
-                <span className={styles['option-text']}>{option}</span>
-              </li>
-            ))}
-          </ul>
+          {isEditing ? (
+            <>
+              <ul>
+                {workingOptions.map((option, index) => (
+                  <li key={index} className={styles['option-item']}>
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) =>
+                        handleOptionChange(index, e.target.value)
+                      }
+                    />
+                    <button
+                      onClick={() => handleOptionSave(index)}
+                      disabled={!option.trim()}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => handleOptionDelete(index)}
+                      disabled={workingOptions.length <= 2}
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+
+              <button onClick={handleAddOption}>+ Add Option</button>
+            </>
+          ) : (
+            <ul>
+              {question.options.map((option, index) => (
+                <li key={index} className={styles['option-item']}>
+                  <span className={styles['option-text']}>{option}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>
